@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة مؤشر كتلة الجسم (Body Mass Index)</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+        }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+        }
+        #result h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        #result ul {
+            padding-right: 1.5rem;
+            margin-bottom: 0;
+        }
+        #result li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>حاسبة مؤشر كتلة الجسم</h1>
+        <div class="input-group">
+            <label for="weight">الوزن (كجم):</label>
+            <input type="number" id="weight" placeholder="أدخل وزنك" required>
+        </div>
+        <div class="input-group">
+            <label for="height">الطول (سم):</label>
+            <input type="number" id="height" placeholder="أدخل طولك" required>
+        </div>
+        <button onclick="calculateBMI()">احسب مؤشر كتلة الجسم</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function calculateBMI() {
+            const weight = document.getElementById('weight').value;
+            const height = document.getElementById('height').value / 100; // تحويل السم إلى متر
+
+            if (!weight || !height) {
+                alert('يرجى إدخال الوزن والطول');
+                return;
+            }
+
+            const bmi = weight / (height * height);
+            const roundedBMI = bmi.toFixed(1);
+
+            try {
+                const response = await fetch('https://api.example.com/bmi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ bmi: roundedBMI }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('فشل في الاتصال بالخادم');
+                }
+
+                const data = await response.json();
+                displayResult(roundedBMI, data.category);
+            } catch (error) {
+                console.error('Error:', error);
+                displayResult(roundedBMI);
+            }
+        }
+
+        function displayResult(bmi, category = '') {
+            let interpretation = '';
+            if (bmi < 18.5) {
+                interpretation = 'نقص في الوزن';
+            } else if (bmi >= 18.5 && bmi < 25) {
+                interpretation = 'وزن طبيعي';
+            } else if (bmi >= 25 && bmi < 30) {
+                interpretation = 'زيادة في الوزن';
+            } else {
+                interpretation = 'سمنة';
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h2>النتيجة</h2>
+                <ul>
+                    <li>**مؤشر كتلة الجسم:** ${bmi}</li>
+                    <li>**التصنيف:** ${interpretation}</li>
+                    ${category ? `<li>**فئة الخطورة:** ${category}</li>` : ''}
+                    <li>**تفسير النتيجة:**
+                        <ul>
+                            <li>مؤشر كتلة الجسم أقل من 18.5: نقص في الوزن</li>
+                            <li>مؤشر كتلة الجسم بين 18.5 و 24.9: وزن طبيعي</li>
+                            <li>مؤشر كتلة الجسم بين 25 و 29.9: زيادة في الوزن</li>
+                            <li>مؤشر كتلة الجسم 30 أو أكثر: سمنة</li>
+                        </ul>
+                    </li>
+                    <li>**ملاحظة:** مؤشر كتلة الجسم هو مقياس عام ولا يأخذ في الاعتبار تركيب الجسم الفردي. استشر أخصائي الرعاية الصحية للحصول على تقييم شامل.</li>
+                </ul>
+            `;
+        }
+    </script>
+</body>
+</html>
